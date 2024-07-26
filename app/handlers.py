@@ -34,6 +34,6 @@ async def handle_message(event, context, websocket):
             async for message in ws:
                 await on_message(message, websocket)
         except websockets.exceptions.ConnectionClosed as e:
-            await on_close(ws, e.code, e.reason, event, connection_id)
+            on_close()
         except Exception as e:
-            await on_error(str(e))
+            on_error(str(e))

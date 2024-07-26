@@ -1,5 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from .handlers import  handle_message
+from .handlers import handle_message
 from dotenv import load_dotenv
 
 load_dotenv()

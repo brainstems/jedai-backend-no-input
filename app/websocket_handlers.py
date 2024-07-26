@@ -5,11 +5,11 @@ async def on_message(message, websocket: WebSocket):
     print(f"Received message: {message}")
     await send_token_to_client(message, websocket)
 
-async def on_error(error):
+def on_error(error):
     print(f"Error occurred: {error}")
     return
 
-async def on_close():
+def on_close():
     print("WebSocket connection closed")
     return
 
