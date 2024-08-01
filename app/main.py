@@ -27,18 +27,3 @@ async def websocket_endpoint(websocket: WebSocket):
         clients.remove(websocket)
     finally:
         await websocket.close()
-
-
-
-# @app.websocket("/ws")
-# async def websocket_endpoint(websocket: WebSocket):
-#     await websocket.accept()
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             event = {'body': data, 'requestContext': {'connectionId': websocket.client.host}}
-#             await handle_message(event, None, websocket)
-#     except WebSocketDisconnect:
-#         print("Client disconnected")
-#     finally:
-#         await websocket.close()
