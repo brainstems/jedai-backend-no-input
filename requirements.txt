@@ -4,3 +4,4 @@ aiohttp
 fastapi
 uvicorn
 python-dotenv
+pyjwt

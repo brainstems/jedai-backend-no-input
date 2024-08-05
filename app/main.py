@@ -3,14 +3,13 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from dotenv import load_dotenv
 from app.api.main_router import api_router
-from app.api.predictions.service import PredictionService
+from app.handlers import handle_message
 load_dotenv()
 
 app = FastAPI()
 clients = set()
 
 app.include_router(api_router, prefix="/api")
-
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -21,7 +20,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             event = {'body': data, 'requestContext': {'connectionId': websocket.client.host}}
-            asyncio.create_task(await PredictionService.handle_socket_message(event, websocket))
+            asyncio.create_task(handle_message(event, websocket))
     except WebSocketDisconnect:
         print("Client disconnected")
         clients.remove(websocket)

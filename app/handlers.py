@@ -1,39 +1,32 @@
 import json
-import os
-import websockets
-from .websocket_handlers import on_message, on_error, on_close, on_open
-from .utils import  generate_json_prompt
-from .prompt_dynamo import get_prompts_from_dynamodb
 
-first_non_empty_token_sent = False
+from app.api.auth.service import AuthService
+from app.api.predictions.service import PredictionService
 
-async def handle_message(event, context, websocket):
-    connection_id = event['requestContext']['connectionId']
+
+async def handle_message(event, client_websocket):
     body = json.loads(event.get('body', '{}'))
-    prompt = body.get('data', {}).get('prompt', '')
+    data = body.get('data', {})
+    prompt = data.get('prompt', '')
+
     if not prompt:
-        await websocket.send_text(json.dumps({'statusCode': 400, 'body': 'No prompt provided'}))
+        await client_websocket.send_text(json.dumps({'statusCode': 400, 'body': 'No prompt provided'}))
         return
-    
 
-    # Get the prompt key from OpenAI // HARDCODED
-    prompt_key = 'SALES'
-    print("Prompt KEY from AI:", prompt_key)
+    token = data.get('token', '')
+    if not token:
+        await client_websocket.send_text(json.dumps({'statusCode': 400, 'body': 'No token provided'}))
+        return
 
-    # Retrieve the system context prompt from DynamoDB using the prompt key
-    prompts = get_prompts_from_dynamodb(prompt_key)
-    system_context_prompt = prompts['contextPrompt']
-    assistant_context_prompt = prompts['assistantPrompt']
-    
-    json_prompt = generate_json_prompt(prompt, system_context_prompt, assistant_context_prompt, max_tokens=10000)
+    try:
+        AuthService.verify_token(token)
+    except ValueError as e:
+        error_message = str(e)
+        await client_websocket.send_text(json.dumps({'statusCode': 498, 'body': error_message}))
+        return
 
-    async with websockets.connect(f"ws://{os.environ.get('AKASH_ENDPOINT')}") as ws:
-        await on_open(ws, json_prompt)
+    prediction_service = PredictionService()
+    await prediction_service.get_new_prediction(prompt, client_websocket)
+    print('Finished getting new prediction')
 
-        try:
-            async for message in ws:
-                await on_message(message, websocket)
-        except websockets.exceptions.ConnectionClosed as e:
-            on_close()
-        except Exception as e:
-            on_error(str(e))
+
