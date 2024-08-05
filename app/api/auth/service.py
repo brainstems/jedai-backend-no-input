@@ -12,7 +12,7 @@ class AuthService:
             'wallet_address': wallet_address,
             'exp': expiration
         }
-        token = jwt.encode(payload, os.environ.get('SECRET_KEY'), algorithms=os.environ.get('ALGORITHM'))
+        token = jwt.encode(payload, os.environ.get('SECRET_KEY'), algorithm=os.environ.get('ALGORITHM'))
         return token
 
     @staticmethod
@@ -27,7 +27,7 @@ class AuthService:
     @staticmethod
     def verify_token(token):
         try:
-            payload = jwt.decode(token, os.environ.get('SECRET_KEY'), algorithms=os.environ.get('ALGORITHM'))
+            payload = jwt.decode(token, os.environ.get('SECRET_KEY'), algorithm=os.environ.get('ALGORITHM'))
             return payload
         except ExpiredSignatureError:
             raise ValueError("Token has expired")
