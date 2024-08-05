@@ -4,3 +4,5 @@ aiohttp
 fastapi
 uvicorn
 python-dotenv
+pyjwt
+websockets

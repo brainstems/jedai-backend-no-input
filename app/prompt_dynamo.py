@@ -12,9 +12,9 @@ def get_prompts_from_dynamodb(prompt_key):
     # Retrieve both prompts from DynamoDB using the prompt key
     region_name = os.environ.get("AWS_REGION")
     dynamodb = boto3.resource('dynamodb', region_name=region_name)
-    table = dynamodb.Table('oa-context-prompts')
+    table = dynamodb.Table('bs-olympics-context-prompts')
     
-    response = table.get_item(Key={'promptKey': prompt_key})
+    response = table.get_item(Key={'sport_key': prompt_key})
     
     if 'Item' in response:
         item = response['Item']
