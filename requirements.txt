@@ -1,5 +1,4 @@
 boto3
-websocket-client
 aiohttp
 fastapi
 uvicorn
