@@ -1,6 +1,8 @@
 # Use a base image with Python 3.11
 FROM python:3.11-slim
 
+RUN apt update && apt install -y git
+
 # Set the working directory to /app
 WORKDIR /app
 
@@ -10,7 +12,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code to the container
-COPY . .
+RUN git clone -b v0.1.2 https://github.com/brainstems/jedai-poc-backend.git
+
+WORKDIR /app/jedai-poc-backend
+
 
 # Expose the port the app will run on
 EXPOSE 4000
@@ -35,4 +40,4 @@ ENV ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
 ENV RETRY_TIME=${RETRY_TIME}
 
 # Command to run the application using Uvicorn
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 4000"]
+CMD ["uvicorn", "app.main:app", "--host=0.0.0.0" , "--reload" , "--port", "4000"]

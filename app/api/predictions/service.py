@@ -2,11 +2,9 @@ import asyncio
 import json
 import os
 import boto3
+import websockets
 from botocore.exceptions import ClientError
 from datetime import datetime, timezone
-
-import websockets
-
 from app.prompt_dynamo import get_prompts_from_dynamodb
 from app.utils import generate_json_prompt
 
@@ -56,5 +54,5 @@ class PredictionService:
                     break
             except Exception as e:
                 print(f"Unable to connect to Inference Server. Retrying in {os.environ.get('RETRY_TIME')} seconds:", e)
-                await asyncio.sleep(30) 
+                await asyncio.sleep(os.get('RETRY_TIME')) 
             
