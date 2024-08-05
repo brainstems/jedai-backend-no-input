@@ -55,6 +55,6 @@ class PredictionService:
                         print("Error receiving message via WebSocket:", e)
                     break
             except Exception as e:
-                print("Unable to connect to Inference Server:", e)
+                print(f"Unable to connect to Inference Server. Retrying in {os.environ.get('RETRY_TIME')} seconds:", e)
                 await asyncio.sleep(30) 
             
