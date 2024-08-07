@@ -44,3 +44,13 @@ async def get_daily_event(api_key: str = Depends(get_api_key)):
         return {"result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/available", response_model=dict)
+async def available_to_predict(address: str, 
+                            #   api_key: str = Depends(get_api_key)
+                              ):
+    try:
+        available = prediction_service.available_to_predict(address)
+        return {"available": available}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

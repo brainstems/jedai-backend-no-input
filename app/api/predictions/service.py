@@ -4,7 +4,7 @@ import os
 import boto3
 import websockets
 from botocore.exceptions import ClientError
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from app.prompt_dynamo import get_prompts_from_dynamodb
 from app.utils import generate_json_prompt
 
@@ -76,5 +76,18 @@ class PredictionService:
                 return daily_event
             else:
                 return None
+        except ClientError as e:
+            raise Exception(e.response['Error']['Message'])
+        
+    def available_to_predict(self, address: str):
+        today = date.today().isoformat()
+        try:
+            response = self.table.query(
+                IndexName='address-timestamp-index',
+                KeyConditionExpression=boto3.dynamodb.conditions.Key('address').eq(address) & 
+                                       boto3.dynamodb.conditions.Key('timestamp').begins_with(today)
+            )
+            items = response.get('Items', [])
+            return len(items) == 0
         except ClientError as e:
             raise Exception(e.response['Error']['Message'])
