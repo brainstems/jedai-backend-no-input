@@ -60,7 +60,7 @@ class PredictionService:
                     break
             except Exception as e:
                 print(f"Unable to connect to Inference Server. Retrying in {os.environ.get('RETRY_TIME')} seconds:", e)
-                await asyncio.sleep(os.environ.get('RETRY_TIME')) 
+                await asyncio.sleep(int(os.environ.get('RETRY_TIME'))) 
 
     @classmethod
     async def get_daily_event(cls):
