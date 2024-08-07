@@ -20,7 +20,9 @@ async def get_api_key(request: Request):
     return api_key
 
 @router.post("/", response_model=dict)
-async def create_prediction(request: PredictionRequest, api_key: str = Depends(get_api_key)):
+async def create_prediction(request: PredictionRequest, 
+                            # api_key: str = Depends(get_api_key)
+                            ):
     try:
         result = prediction_service.save_prediction(request.prediction, request.address)
         return {"result": result}
