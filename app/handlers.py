@@ -10,7 +10,6 @@ async def handle_message(event, client_websocket):
     data = body.get('data', {})
     prompt = data.get('prompt', '')
     api_key = data.get('api_key_auth', '')
-    
     if not api_key :
         await client_websocket.send_text(json.dumps({'statusCode': 400, 'body': 'No api key provided'}))
         return
