@@ -43,8 +43,9 @@ class PredictionService:
         system_context_prompt = prompts['contextPrompt']
         assistant_context_prompt = prompts['assistantPrompt']
         json_prompt = generate_json_prompt(prompt, system_context_prompt, assistant_context_prompt, max_tokens=10000)
-        socket_retry = 0
-        while socket_retry < int(os.environ.get('RETRY_COUNT')):
+        retry_counts = 0
+        done = False
+        while retry_counts < int(os.environ.get('RETRY_COUNT')) and not done:
             try:
                 async with websockets.connect(f"ws://{os.environ.get('AKASH_ENDPOINT')}") as ws:
                     print('Connected to external websocket')
@@ -58,18 +59,20 @@ class PredictionService:
                                 tokens_count += 1
                                 print('Received message from external websocket:', message)
                                 await client_websocket.send_text(json.dumps({"token": message}))
+                            print('TOKENS COUNT =', tokens_count)
                             if tokens_count > 0:
                                 await client_websocket.send_text(json.dumps({"token": 'END_OF_RESPONSE'}))
+                                done = True
                                 break
                             else:
-                                retry_counts += 1
+                                await asyncio.sleep(int(os.environ.get('RETRY_TIME'))) 
                                 print('No messages received from external websocket. Retrying...')
                         except Exception as e:
                             print("Error receiving message via WebSocket:", e)
                             break
             except Exception as e:
                 print(f"Unable to connect to Inference Server. Retrying in {os.environ.get('RETRY_TIME')} seconds:", e)
-                socket_retry += 1
+                retry_counts += 1
                 await asyncio.sleep(int(os.environ.get('RETRY_TIME'))) 
 
     @classmethod
