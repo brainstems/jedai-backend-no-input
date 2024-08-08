@@ -43,23 +43,33 @@ class PredictionService:
         system_context_prompt = prompts['contextPrompt']
         assistant_context_prompt = prompts['assistantPrompt']
         json_prompt = generate_json_prompt(prompt, system_context_prompt, assistant_context_prompt, max_tokens=10000)
-       
-        while True:
+        socket_retry = 0
+        while socket_retry < int(os.environ.get('RETRY_COUNT')):
             try:
                 async with websockets.connect(f"ws://{os.environ.get('AKASH_ENDPOINT')}") as ws:
                     print('Connected to external websocket')
                     await ws.send(json_prompt)
                     print('Message sent to external websocket')
-                    try:
-                        async for message in ws:
-                            print('Received message from external websocket:', message)
-                            await client_websocket.send_text(json.dumps({"token": message}))
-                        await client_websocket.send_text(json.dumps({"token": 'END_OF_RESPONSE'}))
-                    except Exception as e:
-                        print("Error receiving message via WebSocket:", e)
-                    break
+                    retry_counts = 0
+                    while retry_counts < int(os.environ.get('RETRY_COUNT')):
+                        try:
+                            tokens_count = 0
+                            async for message in ws:
+                                tokens_count += 1
+                                print('Received message from external websocket:', message)
+                                await client_websocket.send_text(json.dumps({"token": message}))
+                            if tokens_count > 0:
+                                await client_websocket.send_text(json.dumps({"token": 'END_OF_RESPONSE'}))
+                                break
+                            else:
+                                retry_counts += 1
+                                print('No messages received from external websocket. Retrying...')
+                        except Exception as e:
+                            print("Error receiving message via WebSocket:", e)
+                            break
             except Exception as e:
                 print(f"Unable to connect to Inference Server. Retrying in {os.environ.get('RETRY_TIME')} seconds:", e)
+                socket_retry += 1
                 await asyncio.sleep(int(os.environ.get('RETRY_TIME'))) 
 
     @classmethod

@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code to the container
-RUN git clone -b v0.1.10 https://github.com/brainstems/jedai-poc-backend.git
+RUN git clone -b v0.1.11 https://github.com/brainstems/jedai-poc-backend.git
 
 WORKDIR /app/jedai-poc-backend
 
