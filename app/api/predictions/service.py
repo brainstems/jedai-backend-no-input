@@ -36,12 +36,11 @@ class PredictionService:
 
     @classmethod
     async def get_new_prediction(cls, prompt: str, client_websocket):
-        # prompt_key = 'CHELSEA_CITY'
         event = await cls.get_daily_event()
         if not event:
             await client_websocket.send_text(json.dumps({'statusCode': 404, 'body': 'No daily event found'}))
             return
-        # prompts = get_prompts_from_dynamodb(prompt_key)
+
         system_context_prompt = event['contextPrompt']
         assistant_context_prompt = event['assistantPrompt']
         json_prompt = generate_json_prompt(prompt, system_context_prompt, assistant_context_prompt, max_tokens=10000)
