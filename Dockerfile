@@ -12,9 +12,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code to the container
-RUN git clone -b v0.1.12 https://github.com/brainstems/jedai-poc-backend.git
+RUN git clone -b v0.1.0 https://github.com/brainstems/jedai-backend-no-input.git
 
-WORKDIR /app/jedai-poc-backend
+WORKDIR /app/jedai-backend-no-input
 
 
 # Expose the port the app will run on
@@ -25,7 +25,6 @@ ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
 ARG AWS_REGION
 ARG SECRET_KEY
-ARG ALGORITHM
 ARG ACCESS_TOKEN_EXPIRE_MINUTES
 ARG RETRY_TIME
 
@@ -35,7 +34,6 @@ ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 ENV AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 ENV AWS_REGION=${AWS_REGION}
 ENV SECRET_KEY=${SECRET_KEY}
-ENV ALGORITHM=${ALGORITHM}
 ENV ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
 ENV RETRY_TIME=${RETRY_TIME}
 
