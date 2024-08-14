@@ -16,7 +16,7 @@ class AuthService:
         return token
 
     @staticmethod
-    async def authenticate(address):
+    def authenticate(address):
         wallet_service = WalletService()
         wallet = wallet_service.get_wallet_by_address(address)
         if not wallet:
