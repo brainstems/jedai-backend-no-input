@@ -5,6 +5,7 @@ import boto3
 import websockets
 import uuid
 from botocore.exceptions import ClientError
+from boto3.dynamodb.conditions import Key
 from datetime import date, datetime, timezone
 from app.prompt_dynamo import get_prompts_from_dynamodb
 from app.utils import generate_json_prompt
@@ -15,15 +16,18 @@ class PredictionService:
         self.table = self.dynamodb.Table('bs-football-results')
         self.events = self.dynamodb.Table('bs-football-context-prompts')
 
-    def save_prediction(self, prediction: str, address: str):
+    async def save_prediction(self, prediction: str, address: str):
         timestamp = datetime.now(timezone.utc).isoformat()
         prediction_id = str(uuid.uuid4())
+        event = await self.get_daily_event()
+        team = event['team']
         try:
             self.table.put_item(
                 Item={
                     'id': prediction_id,
                     'prediction': prediction,
                     'address': address,
+                    'team': team,
                     'timestamp': timestamp
                 }
             )
@@ -109,11 +113,11 @@ class PredictionService:
                                  boto3.dynamodb.conditions.Attr('end_ts').gte(iso_date_str)
             )
             
-            
             items = response.get('Items', [])
             if items:
                 # Return the first event from the result
-                return items[0]
+                team_value = items[0]['team']
+                return team_value.replace('_', ' VS ')
             else:
                 return None
         except ClientError as e:
@@ -122,12 +126,12 @@ class PredictionService:
     async def available_to_predict(self, address: str):
         event_of_the_day = await self.get_daily_event()
         team = event_of_the_day['team']
-        print(team)
         try:
             response = self.table.query(
                 IndexName='address-team-index',
-                KeyConditionExpression=boto3.dynamodb.conditions.Key('address').eq(address),
-                FilterExpression=boto3.dynamodb.conditions.Attr('team').eq(team)
+                KeyConditionExpression=(
+                    Key('address').eq(address) & Key('team').eq(team)
+                )
             )
             items = response.get('Items', [])
             return len(items) == 0

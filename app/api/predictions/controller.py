@@ -22,7 +22,7 @@ async def create_prediction(request: PredictionRequest,
                             # api_key: str = Depends(get_api_key)
                             ):
     try:
-        result = prediction_service.save_prediction(request.prediction, request.address)
+        result = await prediction_service.save_prediction(request.prediction, request.address)
         return {"result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -36,7 +36,9 @@ async def get_new_prediction(api_key: str = Depends(get_api_key)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/daily", response_model=dict)
-async def get_daily_event(api_key: str = Depends(get_api_key)):
+async def get_daily_event(
+    # api_key: str = Depends(get_api_key)
+                          ):
     try:
         result = await prediction_service.get_daily_event()
         return {"result": result}
@@ -48,7 +50,7 @@ async def available_to_predict(address: str,
                             #   api_key: str = Depends(get_api_key)
                               ):
     try:
-        available = prediction_service.available_to_predict(address)
+        available = await prediction_service.available_to_predict(address)
         return {"available": available}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
