@@ -3,6 +3,7 @@ import json
 import os
 import boto3
 import websockets
+import uuid
 from botocore.exceptions import ClientError
 from datetime import date, datetime, timezone
 from app.prompt_dynamo import get_prompts_from_dynamodb
@@ -16,14 +17,15 @@ class PredictionService:
 
     def save_prediction(self, prediction: str, address: str):
         timestamp = datetime.now(timezone.utc).isoformat()
+        prediction_id = str(uuid.uuid4())
         try:
             self.table.put_item(
                 Item={
+                    'id': prediction_id,
                     'prediction': prediction,
                     'address': address,
                     'timestamp': timestamp
-                },
-                ConditionExpression='attribute_not_exists(prediction)'
+                }
             )
             return {'prediction': prediction, 'address': address, 'timestamp': timestamp}
         except ClientError as e:
@@ -130,5 +132,16 @@ class PredictionService:
             )
             items = response.get('Items', [])
             return len(items) == 0
+        except ClientError as e:
+            raise Exception(e.response['Error']['Message'])
+    
+    async def get_address_history(self, address: str):
+        try:
+            response = self.table.query(
+                IndexName='address-index',
+                KeyConditionExpression=boto3.dynamodb.conditions.Key('address').eq(address)
+            )
+            items = response.get('Items', [])
+            return items
         except ClientError as e:
             raise Exception(e.response['Error']['Message'])

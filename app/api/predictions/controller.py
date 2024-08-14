@@ -1,5 +1,3 @@
-import json
-import os
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
@@ -52,5 +50,13 @@ async def available_to_predict(address: str,
     try:
         available = prediction_service.available_to_predict(address)
         return {"available": available}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/history", response_model=dict)
+async def get_address_history(address: str):
+    try:
+        history = await prediction_service.get_address_history(address)
+        return {"history": history}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
