@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code to the container
 RUN git clone -b v0.1.0 https://github.com/brainstems/jedai-backend-no-input.git
 
-WORKDIR /app/jedai-poc-backend
+WORKDIR /app/jedai-backend-no-input
 
 
 # Expose the port the app will run on
