@@ -10,7 +10,7 @@ class AuthRequest(BaseModel):
 
 @router.post("/")
 async def authenticate(auth_request: AuthRequest):
-    token = await AuthService.authenticate(auth_request.address)
+    token = AuthService.authenticate(auth_request.address)
     if token is None:
         raise HTTPException(status_code=401, detail="Wallet not found or authentication failed")
     return {"token": token}
