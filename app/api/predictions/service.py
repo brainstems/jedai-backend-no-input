@@ -41,6 +41,7 @@ class PredictionService:
     @classmethod
     async def get_new_prediction(cls, prompt: str, client_websocket):
         event = await cls.get_daily_event()
+        print(event)
         if not event:
             await client_websocket.send_text(json.dumps({'statusCode': 404, 'body': 'No daily event found'}))
             return
@@ -116,8 +117,7 @@ class PredictionService:
             items = response.get('Items', [])
             if items:
                 # Return the first event from the result
-                team_value = items[0]['team']
-                return team_value.replace('_', ' VS ')
+                return items[0]
             else:
                 return None
         except ClientError as e:
