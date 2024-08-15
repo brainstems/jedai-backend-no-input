@@ -48,7 +48,6 @@ class PredictionService:
         system_context_prompt = event['contextPrompt']
         assistant_context_prompt = event['assistantPrompt']
         json_prompt = generate_json_prompt(prompt, system_context_prompt, assistant_context_prompt, max_tokens=10000)
-        print(json_prompt)
         retry_counts = 0
         done = False
         while retry_counts < int(os.environ.get('RETRY_COUNT')) and not done:
