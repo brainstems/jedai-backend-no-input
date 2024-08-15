@@ -41,7 +41,6 @@ class PredictionService:
     @classmethod
     async def get_new_prediction(cls, prompt: str, client_websocket):
         event = await cls.get_daily_event()
-        print(event)
         if not event:
             await client_websocket.send_text(json.dumps({'statusCode': 404, 'body': 'No daily event found'}))
             return
@@ -49,7 +48,6 @@ class PredictionService:
         system_context_prompt = event['contextPrompt']
         assistant_context_prompt = event['assistantPrompt']
         json_prompt = generate_json_prompt(prompt, system_context_prompt, assistant_context_prompt, max_tokens=10000)
-        
         retry_counts = 0
         done = False
         while retry_counts < int(os.environ.get('RETRY_COUNT')) and not done:
@@ -118,6 +116,30 @@ class PredictionService:
             if items:
                 # Return the first event from the result
                 return items[0]
+            else:
+                return None
+        except ClientError as e:
+            raise Exception(e.response['Error']['Message'])
+
+    @classmethod
+    async def get_next_event(cls):
+        try:
+            # Get the current date and time
+            current_time = datetime.now()
+            iso_date_str = current_time.isoformat()
+            # Query the DynamoDB table for events that start after the current time
+            response = cls().events.scan(
+                FilterExpression=boto3.dynamodb.conditions.Attr('start_ts').gte(iso_date_str)
+            )
+
+            items = response.get('Items', [])
+
+            if items:
+                # Find the event with the earliest start_ts
+                next_event = min(items, key=lambda item: item['start_ts'])
+                start_date = next_event['start_ts']
+                team = next_event['team'].replace('_', ' VS ')
+                return {'team': team, 'start_date': start_date}
             else:
                 return None
         except ClientError as e:
