@@ -62,3 +62,13 @@ async def get_address_history(address: str):
         return {"history": history}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/next", response_model=dict)
+async def get_next_event(
+    # api_key: str = Depends(get_api_key)
+                          ):
+    try:
+        result = await prediction_service.get_next_event()
+        return {"result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
