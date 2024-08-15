@@ -86,26 +86,16 @@ class PredictionService:
             
             # THIS SHOULD BE TE CODE, THE OTHER PART IS HARDCODED SO WE CAN GET AN EVENT
             # Get the current date and time
-            # current_time = datetime.now()
-            # current_timestamp = int(current_time.timestamp())  # Convert to UNIX timestamp
+            current_time = datetime.now()
+            current_timestamp = int(current_time.timestamp())  # Convert to UNIX timestamp
             
-            # # Query the DynamoDB table with date range filter
-            # response = cls().events.scan(
-            #     FilterExpression=boto3.dynamodb.conditions.Attr('start_ts').lte(current_timestamp) &
-            #                      boto3.dynamodb.conditions.Attr('end_ts').gte(current_timestamp)
-            # )
-            
-            iso_date_str = '2024-08-17T20:30:00+0000'
+            # Query the DynamoDB table with date range filter
+            response = cls().events.scan(
+                FilterExpression=boto3.dynamodb.conditions.Attr('start_ts').lte(current_timestamp) &
+                                 boto3.dynamodb.conditions.Attr('end_ts').gte(current_timestamp)
+            )
 
-            # Convert the ISO 8601 date string to a datetime object
-            current_time = datetime.strptime(iso_date_str, '%Y-%m-%dT%H:%M:%S%z')
-
-            # Convert the datetime object to a timestamp (if needed)
-            current_timestamp = int(current_time.timestamp())
-
-            # Convert back to ISO 8601 format if required for the query
             iso_date_str = current_time.isoformat()
-
             # Query the DynamoDB table with date range filter
             response = cls().events.scan(
                 FilterExpression=boto3.dynamodb.conditions.Attr('start_ts').lte(iso_date_str) &
