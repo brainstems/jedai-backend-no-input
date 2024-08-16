@@ -23,7 +23,10 @@ async def create_prediction(request: PredictionRequest,
                             ):
     try:
         result = await prediction_service.save_prediction(request.prediction, request.address)
-        return {"result": result}
+        if isinstance(result, dict):
+            return {"result": result}
+        else:
+            return {"error": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

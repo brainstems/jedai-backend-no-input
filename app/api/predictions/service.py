@@ -22,16 +22,27 @@ class PredictionService:
         event = await self.get_daily_event()
         team = event['team']
         try:
-            self.table.put_item(
-                Item={
-                    'id': prediction_id,
-                    'prediction': prediction,
-                    'address': address,
-                    'team': team,
-                    'timestamp': timestamp
-                }
+            response = self.table.query(
+                IndexName='address-team-index',
+                KeyConditionExpression=(
+                    Key('address').eq(address) & Key('team').eq(team)
+                )
             )
-            return {'prediction': prediction, 'address': address, 'timestamp': timestamp}
+            items = response.get('Items', [])
+            if len(items) == 0:
+                self.table.put_item(
+                    Item={
+                        'id': prediction_id,
+                        'prediction': prediction,
+                        'address': address,
+                        'team': team,
+                        'timestamp': timestamp
+                    }
+                )
+                return {'prediction': prediction, 'address': address, 'timestamp': timestamp}
+            else:
+                return f"Prediction already exists for this address: {address} and team: {team}"
+            
         except ClientError as e:
             if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
                 raise Exception("Prediction already exists")
