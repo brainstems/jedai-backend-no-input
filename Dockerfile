@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code to the container
-RUN git clone -b v0.1.5 https://github.com/brainstems/jedai-backend-no-input.git
+RUN git clone -b v0.1.6 https://github.com/brainstems/jedai-backend-no-input.git
 
 WORKDIR /app/jedai-backend-no-input
 
