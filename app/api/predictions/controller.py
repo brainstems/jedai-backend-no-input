@@ -43,6 +43,7 @@ async def get_daily_event(
     # api_key: str = Depends(get_api_key)
                           ):
     try:
+        
         result = await prediction_service.get_daily_event()
         return {"result": result}
     except Exception as e:
