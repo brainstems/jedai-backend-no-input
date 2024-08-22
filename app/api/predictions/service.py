@@ -82,7 +82,7 @@ class PredictionService:
                                 done = True
                                 break
                             else:
-                                await asyncio.sleep(int(os.environ.get('RETRY_TIME'))) 
+                                await asyncio.sleep(int(os.environ.get('RETRY_TIME', 30))) 
                                 print('No messages received from external websocket. Retrying...')
                         except Exception as e:
                             print("Error receiving message via WebSocket:", e)
@@ -90,7 +90,7 @@ class PredictionService:
             except Exception as e:
                 print(f"Unable to connect to Inference Server. Retrying in {os.environ.get('RETRY_TIME')} seconds:", e)
                 retry_counts += 1
-                await asyncio.sleep(int(os.environ.get('RETRY_TIME')))
+                await asyncio.sleep(int(os.environ.get('RETRY_TIME', 30)))
 
     @classmethod
     async def get_daily_event(cls):
