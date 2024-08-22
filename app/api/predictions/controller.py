@@ -157,7 +157,7 @@ async def get_next_event(
     - If an error occurs, the endpoint returns a 500 status code with a detailed error message.
     """
     try:
-        result = await prediction_service.get_next_event()
+        result =await PredictionService.get_next_event()
         return {"result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

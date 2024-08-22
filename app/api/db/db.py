@@ -93,7 +93,7 @@ class DatabaseOperations:
             raise Exception(e.response['Error']['Message'])
         
     @classmethod
-    def get_next_event(cls, iso_date_str: str):
+    async def get_next_event(cls, iso_date_str: str):
         try:
             # Query the DynamoDB table for events that start after the current time
             return cls().football_context_prompts.scan(
