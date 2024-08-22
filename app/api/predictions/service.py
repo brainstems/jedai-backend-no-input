@@ -9,6 +9,7 @@ from boto3.dynamodb.conditions import Key
 from datetime import date, datetime, timezone
 from app.prompt_dynamo import get_prompts_from_dynamodb
 from app.utils import generate_json_prompt
+from app.api.db.db import DatabaseOperations
 
 class PredictionService:
     def __init__(self):
@@ -29,7 +30,7 @@ class PredictionService:
                 )
             )
             items = response.get('Items', [])
-            if len(items) == 0:
+            if len(items) == 0: 
                 self.table.put_item(
                     Item={
                         'id': prediction_id,
@@ -81,7 +82,7 @@ class PredictionService:
                                 done = True
                                 break
                             else:
-                                await asyncio.sleep(int(os.environ.get('RETRY_TIME'))) 
+                                await asyncio.sleep(int(os.environ.get('RETRY_TIME', 30))) 
                                 print('No messages received from external websocket. Retrying...')
                         except Exception as e:
                             print("Error receiving message via WebSocket:", e)
@@ -89,73 +90,44 @@ class PredictionService:
             except Exception as e:
                 print(f"Unable to connect to Inference Server. Retrying in {os.environ.get('RETRY_TIME')} seconds:", e)
                 retry_counts += 1
-                await asyncio.sleep(int(os.environ.get('RETRY_TIME'))) 
+                await asyncio.sleep(int(os.environ.get('RETRY_TIME', 30)))
 
     @classmethod
     async def get_daily_event(cls):
-        try:
-            
-            # THIS SHOULD BE TE CODE, THE OTHER PART IS HARDCODED SO WE CAN GET AN EVENT
-            # Get the current date and time
-            current_time = datetime.now()
-            current_timestamp = int(current_time.timestamp())  # Convert to UNIX timestamp
-            
-            # Query the DynamoDB table with date range filter
-            response = cls().events.scan(
-                FilterExpression=boto3.dynamodb.conditions.Attr('start_ts').lte(current_timestamp) &
-                                 boto3.dynamodb.conditions.Attr('end_ts').gte(current_timestamp)
-            )
-
-            iso_date_str = current_time.isoformat()
-            # Query the DynamoDB table with date range filter
-            response = cls().events.scan(
-                FilterExpression=boto3.dynamodb.conditions.Attr('start_ts').lte(iso_date_str) &
-                                 boto3.dynamodb.conditions.Attr('end_ts').gte(iso_date_str)
-            )
-            
-            items = response.get('Items', [])
-            if items:
-                # Return the first event from the result
-                return items[0]
-            else:
-                return None
-        except ClientError as e:
-            raise Exception(e.response['Error']['Message'])
+        # Get the current date and time
+        current_time = datetime.now()
+        iso_date_str = current_time.isoformat()
+        response = await DatabaseOperations.get_daily_event(iso_date_str)
+        items = response.get('Items', [])
+        if items:
+            # Return the first event from the result
+            return items[0]
+        else:
+            return None
 
     @classmethod
     async def get_next_event(cls):
-        try:
-            # Get the current date and time
-            current_time = datetime.now()
-            iso_date_str = current_time.isoformat()
-            # Query the DynamoDB table for events that start after the current time
-            response = cls().events.scan(
-                FilterExpression=boto3.dynamodb.conditions.Attr('start_ts').gte(iso_date_str)
-            )
-
-            items = response.get('Items', [])
-
-            if items:
-                # Find the event with the earliest start_ts
-                next_event = min(items, key=lambda item: item['start_ts'])
-                start_date = next_event['start_ts']
-                team = next_event['team'].replace('_', ' VS ')
-                return {'team': team, 'start_date': start_date}
-            else:
-                return None
-        except ClientError as e:
-            raise Exception(e.response['Error']['Message'])
+        # Get the current date and time
+        current_time = datetime.now()
+        iso_date_str = current_time.isoformat()
+        response = await DatabaseOperations.get_next_event(iso_date_str)
+        items = response.get('Items', [])
+        if items:
+            # Find the event with the earliest start_ts
+            next_event = min(items, key=lambda item: item['start_ts'])
+            start_date = next_event['start_ts']
+            team = next_event['team'].replace('_', ' VS ')
+            return {'team': team, 'start_date': start_date}
+        else:
+            return None
 
     async def available_to_predict(self, address: str):
         event_of_the_day = await self.get_daily_event()
+        if event_of_the_day is None:
+            return False
         team = event_of_the_day['team']
         try:
-            response = self.table.query(
-                IndexName='address-team-index',
-                KeyConditionExpression=(
-                    Key('address').eq(address) & Key('team').eq(team)
-                )
-            )
+            response = await DatabaseOperations.available_to_predict(address, team)
             items = response.get('Items', [])
             return len(items) == 0
         except ClientError as e:
