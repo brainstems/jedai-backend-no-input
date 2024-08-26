@@ -1,26 +1,31 @@
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from app.utils import check_api_key
+
 from .service import PredictionService
 
 router = APIRouter()
 
 prediction_service = PredictionService()
 
+
 class PredictionRequest(BaseModel):
     prediction: str
     address: str
+
 
 async def get_api_key(request: Request):
     api_key = request.headers.get("api_key_auth")
     check_api_key(api_key)
     return api_key
 
+
 @router.post("/", response_model=dict)
-async def create_prediction(request: PredictionRequest, 
-                            # api_key: str = Depends(get_api_key)
-                            ):
+async def create_prediction(
+    request: PredictionRequest,
+    # api_key: str = Depends(get_api_key)
+):
     """
     Create a new prediction and store it in the database.
 
@@ -32,20 +37,23 @@ async def create_prediction(request: PredictionRequest,
     Returns:
     dict: A dictionary containing either:
         - "result" (dict): If the prediction was successfully saved, it includes the saved prediction details.
-        - "error" (str): If the prediction could not be saved due to an existing prediction for the same address and team.
+        - "error" (str): If the prediction could not be saved due to an existing prediction
+        for the same address and team.
 
     Raises:
-    HTTPException: 
+    HTTPException:
         - 500 Internal Server Error: If there is an unhandled exception during the process.
 
     Notes:
     - The endpoint expects a POST request with a JSON body containing the `prediction` and `address`.
     - If an error occurs, the endpoint returns a 500 status code with a detailed error message.
-    - API key authentication is currently commented out but could be added by uncommenting the `api_key` parameter 
+    - API key authentication is currently commented out but could be added by uncommenting the `api_key` parameter
       and using the `get_api_key` dependency.
     """
     try:
-        result = await prediction_service.save_prediction(request.prediction, request.address)
+        result = await prediction_service.save_prediction(
+            request.prediction, request.address
+        )
         if isinstance(result, dict):
             return {"result": result}
         else:
@@ -57,7 +65,7 @@ async def create_prediction(request: PredictionRequest,
 @router.get("/daily", response_model=dict)
 async def get_daily_event(
     # api_key: str = Depends(get_api_key)
-                          ):
+):
     """
     Retrieve the daily event from the database.
 
@@ -66,13 +74,13 @@ async def get_daily_event(
         - "result" (dict): The details of the daily event retrieved from the database.
 
     Raises:
-    HTTPException: 
+    HTTPException:
         - 500 Internal Server Error: If there is an unhandled exception during the process.
 
     Notes:
     - The endpoint is a GET request and does not require any parameters in the request body.
     - If an error occurs, the endpoint returns a 500 status code with a detailed error message.
-    - API key authentication is currently commented out but could be added by uncommenting the `api_key` parameter 
+    - API key authentication is currently commented out but could be added by uncommenting the `api_key` parameter
       and using the `get_api_key` dependency.
     """
     try:
@@ -81,10 +89,12 @@ async def get_daily_event(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/available", response_model=dict)
-async def available_to_predict(address: str, 
-                            #   api_key: str = Depends(get_api_key)
-                              ):
+async def available_to_predict(
+    address: str,
+    #   api_key: str = Depends(get_api_key)
+):
     """
     Check if a prediction is available for a given address.
 
@@ -96,13 +106,13 @@ async def available_to_predict(address: str,
         - "available" (bool): True if a prediction can be made for the provided address, False otherwise.
 
     Raises:
-    HTTPException: 
+    HTTPException:
         - 500 Internal Server Error: If there is an unhandled exception during the process.
 
     Notes:
     - The endpoint is a GET request that requires an `address` query parameter.
     - If an error occurs, the endpoint returns a 500 status code with a detailed error message.
-    - API key authentication is currently commented out but could be added by uncommenting the `api_key` parameter 
+    - API key authentication is currently commented out but could be added by uncommenting the `api_key` parameter
       and using the `get_api_key` dependency.
     """
     try:
@@ -110,6 +120,7 @@ async def available_to_predict(address: str,
         return {"available": available}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/history", response_model=dict)
 async def get_address_history(address: str):
@@ -136,11 +147,12 @@ async def get_address_history(address: str):
         return {"history": history}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 @router.get("/next", response_model=dict)
 async def get_next_event(
     # api_key: str = Depends(get_api_key)
-                          ):
+):
     """
     Retrieve the next scheduled event.
 
@@ -157,7 +169,7 @@ async def get_next_event(
     - If an error occurs, the endpoint returns a 500 status code with a detailed error message.
     """
     try:
-        result =await PredictionService.get_next_event()
+        result = await PredictionService.get_next_event()
         return {"result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
