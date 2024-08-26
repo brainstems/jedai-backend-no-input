@@ -5,18 +5,18 @@ from botocore.exceptions import ClientError
 
 
 class WalletService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dynamodb = boto3.resource(
             "dynamodb", region_name=os.environ.get("AWS_REGION")
         )
         self.wallets = self.dynamodb.Table("bs-user-contacts")
 
-    def get_wallets(self):
+    def get_wallets(self) -> list[dict[str, dict[str, int]]]:
         response = self.wallets.scan()
         wallets = response.get("Items", [])
         return wallets
 
-    def get_wallet_by_address(self, address: str):
+    def get_wallet_by_address(self, address: str) -> dict[str, dict[str, int]]:
         try:
             response = self.wallets.query(
                 IndexName="address-index",

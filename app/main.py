@@ -10,7 +10,7 @@ from app.handlers import handle_message
 load_dotenv()
 
 app = FastAPI()
-clients = set()
+clients: set[WebSocket] = set()
 
 origins = [
     "http://localhost",
@@ -33,7 +33,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
     try:
         while True:
-            data = await websocket.receive_text()
+            data: str = await websocket.receive_text()
             event = {
                 "body": data,
                 "requestContext": {"connectionId": websocket.client.host},

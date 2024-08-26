@@ -3,25 +3,29 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
+from typing import Optional, Union
 
 import boto3
 import websockets
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
+from fastapi import WebSocket
 
 from app.api.db.db import DatabaseOperations
 from app.utils import generate_json_prompt
 
 
 class PredictionService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dynamodb = boto3.resource(
             "dynamodb", region_name=os.environ.get("AWS_REGION")
         )
         self.table = self.dynamodb.Table("bs-football-results")
         self.events = self.dynamodb.Table("bs-football-context-prompts")
 
-    async def save_prediction(self, prediction: str, address: str):
+    async def save_prediction(
+        self, prediction: str, address: str
+    ) -> Union[dict[str, str], str]:
         timestamp = datetime.now(timezone.utc).isoformat()
         prediction_id = str(uuid.uuid4())
         event = await self.get_daily_event()
@@ -59,7 +63,7 @@ class PredictionService:
                 raise Exception(e.response["Error"]["Message"])
 
     @classmethod
-    async def get_new_prediction(cls, prompt: str, client_websocket):
+    async def get_new_prediction(cls, prompt: str, client_websocket: WebSocket) -> None:
         event = await cls.get_daily_event()
         if not event:
             await client_websocket.send_text(
@@ -74,7 +78,7 @@ class PredictionService:
         )
         retry_counts = 0
         done = False
-        while retry_counts < int(os.environ.get("RETRY_COUNT")) and not done:
+        while retry_counts < int(os.environ.get("RETRY_COUNT", "3")) and not done:
             try:
                 async with websockets.connect(
                     f"ws://{os.environ.get('AKASH_ENDPOINT')}"
@@ -83,7 +87,7 @@ class PredictionService:
                     await ws.send(json_prompt)
                     print("Message sent to external websocket")
                     retry_counts = 0
-                    while retry_counts < int(os.environ.get("RETRY_COUNT")):
+                    while retry_counts < int(os.environ.get("RETRY_COUNT", "3")):
                         try:
                             tokens_count = 0
                             async for message in ws:
@@ -103,7 +107,7 @@ class PredictionService:
                                 break
                             else:
                                 await asyncio.sleep(
-                                    int(os.environ.get("RETRY_TIME", 30))
+                                    int(os.environ.get("RETRY_TIME", "30"))
                                 )
                                 print(
                                     "No messages received from external websocket. Retrying..."
@@ -117,30 +121,26 @@ class PredictionService:
                     e,
                 )
                 retry_counts += 1
-                await asyncio.sleep(int(os.environ.get("RETRY_TIME", 30)))
+                await asyncio.sleep(int(os.environ.get("RETRY_TIME", "30")))
 
     @classmethod
-    async def get_daily_event(cls):
-        # Get the current date and time
+    async def get_daily_event(cls) -> Optional[dict[str, list | str]]:
         current_time = datetime.now()
         iso_date_str = current_time.isoformat()
         response = await DatabaseOperations.get_daily_event(iso_date_str)
         items = response.get("Items", [])
         if items:
-            # Return the first event from the result
             return items[0]
         else:
             return None
 
     @classmethod
-    async def get_next_event(cls):
-        # Get the current date and time
+    async def get_next_event(cls) -> Optional[dict[str, str]]:
         current_time = datetime.now()
         iso_date_str = current_time.isoformat()
         response = await DatabaseOperations.get_next_event(iso_date_str)
         items = response.get("Items", [])
         if items:
-            # Find the event with the earliest start_ts
             next_event = min(items, key=lambda item: item["start_ts"])
             start_date = next_event["start_ts"]
             team = next_event["team"].replace("_", " VS ")
@@ -148,7 +148,7 @@ class PredictionService:
         else:
             return None
 
-    async def available_to_predict(self, address: str):
+    async def available_to_predict(self, address: str) -> bool:
         event_of_the_day = await self.get_daily_event()
         if event_of_the_day is None:
             return False
@@ -160,13 +160,11 @@ class PredictionService:
         except ClientError as e:
             raise Exception(e.response["Error"]["Message"])
 
-    async def get_address_history(self, address: str):
+    async def get_address_history(self, address: str) -> list[dict[str, str | int]]:
         try:
             response = self.table.query(
                 IndexName="address-index",
-                KeyConditionExpression=boto3.dynamodb.conditions.Key("address").eq(
-                    address
-                ),
+                KeyConditionExpression=Key("address").eq(address),
             )
             items = response.get("Items", [])
             return items
