@@ -3,7 +3,7 @@ import os
 import boto3
 
 
-def default_prompts():
+def default_prompts() -> dict[str, str]:
     # Return default prompts if the prompt key is not found in DynamoDB
     return {
         "contextPrompt": "Generate a response in a simple list format with hierarchy, "
@@ -19,7 +19,7 @@ def default_prompts():
     }
 
 
-def get_prompts_from_dynamodb(prompt_key):
+def get_prompts_from_dynamodb(prompt_key: str) -> dict[str, str]:
     # Retrieve both prompts from DynamoDB using the prompt key
     region_name = os.environ.get("AWS_REGION")
     dynamodb = boto3.resource("dynamodb", region_name=region_name)

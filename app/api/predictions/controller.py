@@ -15,17 +15,29 @@ class PredictionRequest(BaseModel):
     address: str
 
 
-async def get_api_key(request: Request):
+async def get_api_key(request: Request) -> str:
+    """
+    Extracts the API key from the request headers and checks its validity.
+
+    Parameters:
+    request (Request): The incoming request object.
+
+    Returns:
+    str: The API key extracted from the headers.
+
+    Raises:
+    HTTPException: If the API key is invalid or missing.
+    """
     api_key = request.headers.get("api_key_auth")
     check_api_key(api_key)
     return api_key
 
 
-@router.post("/", response_model=dict)
+@router.post("/", response_model=dict[str, str | int])
 async def create_prediction(
     request: PredictionRequest,
     # api_key: str = Depends(get_api_key)
-):
+) -> dict[str, dict] | dict[str, str]:
     """
     Create a new prediction and store it in the database.
 
@@ -62,10 +74,10 @@ async def create_prediction(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/daily", response_model=dict)
+@router.get("/daily", response_model=dict[str, str | int])
 async def get_daily_event(
     # api_key: str = Depends(get_api_key)
-):
+) -> dict[str, dict[str, str | int] | None]:
     """
     Retrieve the daily event from the database.
 
@@ -90,11 +102,11 @@ async def get_daily_event(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/available", response_model=dict)
+@router.get("/available", response_model=dict[str, bool])
 async def available_to_predict(
     address: str,
     #   api_key: str = Depends(get_api_key)
-):
+) -> dict[str, bool]:
     """
     Check if a prediction is available for a given address.
 
@@ -122,8 +134,8 @@ async def available_to_predict(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/history", response_model=dict)
-async def get_address_history(address: str):
+@router.get("/history", response_model=dict[str, str | int])
+async def get_address_history(address: str) -> dict[str, list[dict[str, int]]]:
     """
     Retrieve the prediction history for a given address.
 
@@ -149,10 +161,10 @@ async def get_address_history(address: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/next", response_model=dict)
+@router.get("/next", response_model=dict[str, str])
 async def get_next_event(
     # api_key: str = Depends(get_api_key)
-):
+) -> dict[str, dict[str, str] | None]:
     """
     Retrieve the next scheduled event.
 

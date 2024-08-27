@@ -15,7 +15,7 @@ wallet_service = WalletService()
 
 
 @router.post("/", response_model=Wallet)
-def create_new_wallet(wallet: Wallet):
+def create_new_wallet(wallet: Wallet) -> Wallet:
     try:
         return wallet_service.create_wallet(wallet.address)
     except ClientError as e:
@@ -26,7 +26,7 @@ def create_new_wallet(wallet: Wallet):
 
 
 @router.get("/", response_model=list[Wallet])
-def get_wallets():
+def get_wallets() -> list[Wallet]:
     try:
         return wallet_service.get_wallets()
     except ClientError as e:
@@ -34,7 +34,7 @@ def get_wallets():
 
 
 @router.get("/{address}", response_model=Wallet)
-def get_wallet_by_address(address: str):
+def get_wallet_by_address(address: str) -> Wallet:
     try:
         return wallet_service.get_wallet_by_address(address)
     except Exception as e:

@@ -1,6 +1,7 @@
 import os
 import uuid
 from datetime import datetime, timezone
+from typing import Union
 
 import boto3
 from aiohttp import ClientError
@@ -8,7 +9,7 @@ from boto3.dynamodb.conditions import Key
 
 
 class DatabaseOperations:
-    def __init__(self):
+    def __init__(self) -> None:
         self.dynamodb = boto3.resource(
             "dynamodb", region_name=os.environ.get("AWS_REGION")
         )
@@ -19,7 +20,9 @@ class DatabaseOperations:
         self.user_contacts = self.dynamodb.Table("bs-user-contacts")
 
     @classmethod
-    def save_prediction(cls, address: str, prediction: str, team: str):
+    def save_prediction(
+        cls, address: str, prediction: str, team: str
+    ) -> Union[dict[str, str], str]:
         """
         Saves a prediction to DynamoDB.
 
@@ -77,24 +80,7 @@ class DatabaseOperations:
                 raise Exception(e.response["Error"]["Message"])
 
     @classmethod
-    async def get_daily_event(cls, iso_date_str: str):
-        """
-        Retrieve the daily event from DynamoDB based on a specific date.
-
-        Parameters:
-        iso_date_str (str): The ISO 8601 formatted date string used to filter the event.
-
-        Returns:
-        dict: A dictionary containing the event data retrieved from the DynamoDB table.
-
-        Raises:
-        Exception: If there is an error querying DynamoDB, the specific error message is raised.
-
-        Notes:
-        - The function scans the `football_context_prompts` table to find an event that falls within the date range
-        specified by `start_ts` and `end_ts`.
-        - The date provided should be in UTC and formatted as an ISO 8601 string.
-        """
+    async def get_daily_event(cls, iso_date_str: str) -> dict[str, str | int]:
         try:
             # Query the DynamoDB table with date range filter
             return cls().football_context_prompts.scan(
@@ -107,7 +93,7 @@ class DatabaseOperations:
             raise Exception(e.response["Error"]["Message"])
 
     @classmethod
-    async def get_next_event(cls, iso_date_str: str):
+    async def get_next_event(cls, iso_date_str: str) -> dict[str, str | int]:
         try:
             # Query the DynamoDB table for events that start after the current time
             return cls().football_context_prompts.scan(
@@ -119,7 +105,9 @@ class DatabaseOperations:
             raise Exception(e.response["Error"]["Message"])
 
     @classmethod
-    async def available_to_predict(cls, address: str, team: str):
+    async def available_to_predict(
+        cls, address: str, team: str
+    ) -> dict[str, str | int]:
         try:
             return cls().football_results.query(
                 IndexName="address-team-index",
