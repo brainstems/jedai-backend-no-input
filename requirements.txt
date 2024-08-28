@@ -6,3 +6,5 @@ python-dotenv
 pyjwt
 websockets
 pre-commit
+pytest
+pytest-cov
