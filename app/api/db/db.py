@@ -7,6 +7,7 @@ import boto3
 from aiohttp import ClientError
 from boto3.dynamodb.conditions import Key
 
+from cachetools import TTLCache
 
 class DatabaseOperations:
     def __init__(self) -> None:
@@ -18,6 +19,7 @@ class DatabaseOperations:
             "bs-football-context-prompts"
         )
         self.user_contacts = self.dynamodb.Table("bs-user-contacts")
+        self.query_cache = TTLCache(maxsize=100, ttl=432000)
 
     @classmethod
     def save_prediction(
@@ -37,7 +39,7 @@ class DatabaseOperations:
         str: A message indicating that a prediction already exists for the provided address and team.
 
         Exceptions:
-        boto3.exceptions.Boto3Error: If there's an issue with querying or inserting data into DynamoDB.
+        boto3.exceptions.Boto3Error: If there"s an issue with querying or inserting data into DynamoDB.
 
         Notes:
         - The function first checks if a prediction for the given address and team already exists using the
@@ -101,6 +103,31 @@ class DatabaseOperations:
                     iso_date_str
                 )
             )
+        except ClientError as e:
+            raise Exception(e.response["Error"]["Message"])
+
+    @classmethod
+    async def get_all_events(cls, iso_date_str: str):
+        if cls().query_cache.get("events"):
+            return cls().query_cache.get("events")
+        try:
+            events = cls().football_context_prompts.scan(
+                FilterExpression=boto3.dynamodb.conditions.Attr("start_ts").gte(iso_date_str)
+            )
+            sorted_events = sorted(events["Items"], key=lambda x: x["start_ts"])
+            cls().query_cache["events"] = sorted_events
+            return sorted_events
+        except ClientError as e:
+            raise Exception(e.response["Error"]["Message"])
+
+    @classmethod
+    async def get_user_events(cls, address: str):
+        try:
+            user_events = cls().football_results.query(
+                IndexName="address-index",
+                KeyConditionExpression=boto3.dynamodb.conditions.Key("address").eq(address)
+            )
+            return user_events["Items"]
         except ClientError as e:
             raise Exception(e.response["Error"]["Message"])
 

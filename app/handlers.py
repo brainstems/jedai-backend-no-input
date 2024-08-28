@@ -12,13 +12,11 @@ async def handle_message(
 ) -> None:
     body = json.loads(event.get("body", "{}"))
     data = body.get("data", {})
-    prompt: str = data.get("prompt", "")
-    api_key: str = data.get("api_key_auth", "")
-
-    if not api_key:
-        await client_websocket.send_text(
-            json.dumps({"statusCode": 400, "body": "No api key provided"})
-        )
+    prompt = data.get("prompt", "")
+    team = data.get("team", "")
+    api_key = data.get("api_key_auth", "")
+    if not api_key :
+        await client_websocket.send_text(json.dumps({"statusCode": 400, "body": "No api key provided"}))
         return
 
     if api_key != os.environ.get("API_KEY_AUTH"):
@@ -49,6 +47,7 @@ async def handle_message(
         )
         return
 
-    prediction_service = PredictionService()
-    await prediction_service.get_new_prediction(prompt, client_websocket)
+    await PredictionService.get_new_prediction(prompt, client_websocket, team)
     print("Finished getting new prediction")
+
+
