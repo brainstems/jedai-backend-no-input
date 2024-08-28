@@ -5,6 +5,7 @@ import uuid
 from aiohttp import ClientError
 from boto3.dynamodb.conditions import Key
 import boto3
+from cachetools import TTLCache
 
 class DatabaseOperations:
     def __init__(self):
@@ -12,6 +13,7 @@ class DatabaseOperations:
             self.football_results = self.dynamodb.Table('bs-football-results')
             self.football_context_prompts = self.dynamodb.Table('bs-football-context-prompts')
             self.user_contacts = self.dynamodb.Table('bs-user-contacts')
+            self.query_cache = TTLCache(maxsize=100, ttl=432000)
 
     @classmethod
     def save_prediction(cls, address: str, prediction: str, team: str):
@@ -111,5 +113,30 @@ class DatabaseOperations:
                     Key('address').eq(address) & Key('team').eq(team)
                 )
             )
+        except ClientError as e:
+            raise Exception(e.response['Error']['Message'])
+        
+    @classmethod
+    async def get_all_events(cls, iso_date_str: str):
+        if cls().query_cache.get('events'):
+            return cls().query_cache.get('events')
+        try:
+            events = cls().football_context_prompts.scan(
+                FilterExpression=boto3.dynamodb.conditions.Attr('start_ts').gte(iso_date_str)
+            )
+            sorted_events = sorted(events['Items'], key=lambda x: x['start_ts'])
+            cls().query_cache['events'] = sorted_events
+            return sorted_events
+        except ClientError as e:
+            raise Exception(e.response['Error']['Message'])
+    
+    @classmethod
+    async def get_user_events(cls, address: str):
+        try:
+            user_events = cls().football_results.query(
+                IndexName='address-index',
+                KeyConditionExpression=boto3.dynamodb.conditions.Key('address').eq(address)
+            )
+            return user_events['Items']
         except ClientError as e:
             raise Exception(e.response['Error']['Message'])

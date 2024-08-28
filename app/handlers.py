@@ -9,6 +9,7 @@ async def handle_message(event, client_websocket):
     body = json.loads(event.get('body', '{}'))
     data = body.get('data', {})
     prompt = data.get('prompt', '')
+    address = data.get('address', '')
     api_key = data.get('api_key_auth', '')
     if not api_key :
         await client_websocket.send_text(json.dumps({'statusCode': 400, 'body': 'No api key provided'}))
@@ -34,8 +35,7 @@ async def handle_message(event, client_websocket):
         await client_websocket.send_text(json.dumps({'statusCode': 498, 'body': error_message}))
         return
 
-    prediction_service = PredictionService()
-    await prediction_service.get_new_prediction(prompt, client_websocket)
+    await PredictionService.get_new_prediction(prompt, client_websocket, address)
     print('Finished getting new prediction')
 
 

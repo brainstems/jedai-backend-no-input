@@ -157,7 +157,33 @@ async def get_next_event(
     - If an error occurs, the endpoint returns a 500 status code with a detailed error message.
     """
     try:
-        result =await PredictionService.get_next_event()
+        result = await PredictionService.get_next_event()
         return {"result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/open", response_model=dict)
+async def get_next_event_for_address(address: str):
+    """
+    Retrieve the next event prediction for the given address.
+
+    Args:
+    address (str): The address for which to retrieve the next event prediction.
+
+    Returns:
+    dict: A dictionary containing:
+        - "team" (str): The team associated with the next event.
+
+    Raises:
+    HTTPException:
+        - 500 Internal Server Error: If there is an unhandled exception during the process.
+
+    Notes:
+    - The endpoint is a GET request that requires an address parameter.
+    - If an error occurs, the endpoint returns a 500 status code with a detailed error message.
+    """
+    try:
+        result = await PredictionService.get_address_prediction_event(address)
+        return {"team": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
