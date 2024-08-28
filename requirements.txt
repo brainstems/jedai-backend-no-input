@@ -6,3 +6,5 @@ python-dotenv
 pyjwt
 websockets
 cachetools
+pytest
+pytest-cov

@@ -1,13 +1,16 @@
 import asyncio
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
+
 from app.api.main_router import api_router
 from app.handlers import handle_message
+
 load_dotenv()
 
 app = FastAPI()
-clients = set()
+clients: set[WebSocket] = set()
 
 origins = [
     "http://localhost",
@@ -22,6 +25,7 @@ app.add_middleware(
 )
 app.include_router(api_router, prefix="/api")
 
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -29,8 +33,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
     try:
         while True:
-            data = await websocket.receive_text()
-            event = {'body': data, 'requestContext': {'connectionId': websocket.client.host}}
+            data: str = await websocket.receive_text()
+            event = {
+                "body": data,
+                "requestContext": {"connectionId": websocket.client.host},
+            }
             asyncio.create_task(handle_message(event, websocket))
     except WebSocketDisconnect:
         print("Client disconnected")
