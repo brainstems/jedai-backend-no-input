@@ -23,12 +23,10 @@ class PredictionService:
         self.events = self.dynamodb.Table("bs-football-context-prompts")
 
     async def save_prediction(
-        self, prediction: str, address: str
+        self, prediction: str, address: str, team: str
     ) -> Union[dict[str, str], str]:
         timestamp = datetime.now(timezone.utc).isoformat()
         prediction_id = str(uuid.uuid4())
-        event = await self.get_daily_event()
-        team = event["team"]
         try:
             response = self.table.query(
                 IndexName="address-team-index",
@@ -62,8 +60,12 @@ class PredictionService:
                 raise Exception(e.response["Error"]["Message"])
 
     @classmethod
-    async def get_new_prediction(cls, prompt: str, client_websocket: WebSocket) -> None:
-        event = await cls.get_daily_event()
+    async def get_new_prediction(cls, prompt: str, client_websocket, team: str):
+        current_time = datetime.now()
+        iso_date_str = current_time.isoformat()
+        iso_date_str = "2024-08-21T12:00:00+0000"
+        events = await DatabaseOperations.get_all_events(iso_date_str)
+        event = next((e for e in events if e['team'] == team), None)
         if not event:
             await client_websocket.send_text(
                 json.dumps({"statusCode": 404, "body": "No daily event found"})
@@ -168,4 +170,19 @@ class PredictionService:
             items = response.get("Items", [])
             return items
         except ClientError as e:
-            raise Exception(e.response["Error"]["Message"])
+            raise Exception(e.response['Error']['Message'])
+    
+    @classmethod
+    async def get_address_prediction_event(cls, address: str):
+        try:
+            current_time = datetime.now()
+            iso_date_str = current_time.isoformat()
+            iso_date_str = "2024-08-21T12:00:00+0000"
+            events = await DatabaseOperations.get_all_events(iso_date_str)
+            user_events = await DatabaseOperations.get_user_events(address)            
+            for event in events:
+                event_teams = [ue['team'] for ue in user_events]
+                if event['team'] not in event_teams:
+                    return event['team']
+        except ClientError as e:
+            raise Exception(e.response['Error']['Message'])

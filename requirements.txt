@@ -5,6 +5,6 @@ uvicorn
 python-dotenv
 pyjwt
 websockets
-pre-commit
+cachetools
 pytest
 pytest-cov
