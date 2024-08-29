@@ -63,7 +63,6 @@ class PredictionService:
     async def get_new_prediction(cls, prompt: str, client_websocket, team: str):
         current_time = datetime.now()
         iso_date_str = current_time.isoformat()
-        iso_date_str = "2024-08-21T12:00:00+0000"
         events = await DatabaseOperations.get_all_events(iso_date_str)
         event = next((e for e in events if e['team'] == team), None)
         if not event:
@@ -177,7 +176,6 @@ class PredictionService:
         try:
             current_time = datetime.now()
             iso_date_str = current_time.isoformat()
-            iso_date_str = "2024-08-21T12:00:00+0000"
             events = await DatabaseOperations.get_all_events(iso_date_str)
             user_events = await DatabaseOperations.get_user_events(address)            
             for event in events:
