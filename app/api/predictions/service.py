@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, Union
+from typing import  Optional, Union
 
 import boto3
 import websockets
@@ -13,7 +13,6 @@ from fastapi import WebSocket
 
 from app.api.db.db import DatabaseOperations
 from app.utils import generate_json_prompt
-
 
 class PredictionService:
     def __init__(self) -> None:
