@@ -9,7 +9,6 @@ import boto3
 import websockets
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
-from fastapi import WebSocket
 
 from app.api.db.db import DatabaseOperations
 from app.utils import generate_json_prompt
@@ -64,7 +63,7 @@ class PredictionService:
         current_time = datetime.now()
         iso_date_str = current_time.isoformat()
         events = await DatabaseOperations.get_all_events(iso_date_str)
-        event = next((e for e in events if e['team'] == team), None)
+        event = next((e for e in events if e["team"] == team), None)
         if not event:
             await client_websocket.send_text(
                 json.dumps({"statusCode": 404, "body": "No daily event found"})
@@ -169,18 +168,18 @@ class PredictionService:
             items = response.get("Items", [])
             return items
         except ClientError as e:
-            raise Exception(e.response['Error']['Message'])
-    
+            raise Exception(e.response["Error"]["Message"])
+
     @classmethod
     async def get_address_prediction_event(cls, address: str):
         try:
             current_time = datetime.now()
             iso_date_str = current_time.isoformat()
             events = await DatabaseOperations.get_all_events(iso_date_str)
-            user_events = await DatabaseOperations.get_user_events(address)            
+            user_events = await DatabaseOperations.get_user_events(address)
             for event in events:
-                event_teams = [ue['team'] for ue in user_events]
-                if event['team'] not in event_teams:
-                    return event['team']
+                event_teams = [ue["team"] for ue in user_events]
+                if event["team"] not in event_teams:
+                    return event["team"]
         except ClientError as e:
-            raise Exception(e.response['Error']['Message'])
+            raise Exception(e.response["Error"]["Message"])
