@@ -197,7 +197,7 @@ class PredictionController(BaseController):
             PredictionController.handle_backend_error(e)
 
 
-# Definición de las rutas utilizando los métodos estáticos de PredictionController
+# Defining routes using the static methods of the PredictionController
 @router.post("/", response_model=Union[dict[str, dict[str, str]], dict[str, str]])
 async def create_prediction(
     request: PredictionRequest,
