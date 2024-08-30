@@ -5,8 +5,7 @@ from typing import Union
 
 import boto3
 from aiohttp import ClientError
-from boto3.dynamodb.conditions import Key
-
+from boto3.dynamodb.conditions import Key, Attr, And
 from cachetools import TTLCache
 
 class DatabaseOperations:
@@ -112,7 +111,10 @@ class DatabaseOperations:
             return cls().query_cache.get("events")
         try:
             events = cls().football_context_prompts.scan(
-                FilterExpression=boto3.dynamodb.conditions.Attr("start_ts").gte(iso_date_str)
+            FilterExpression=And(
+                Attr("start_ts").lte(iso_date_str),
+                Attr("end_ts").gte(iso_date_str)
+            )
             )
             sorted_events = sorted(events["Items"], key=lambda x: x["start_ts"])
             cls().query_cache["events"] = sorted_events

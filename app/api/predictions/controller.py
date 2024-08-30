@@ -1,6 +1,5 @@
-from typing import Union
-
-from fastapi import APIRouter
+from typing import Dict, List, Union
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from app.api.utils import BaseController
@@ -11,6 +10,16 @@ router = APIRouter()
 
 prediction_service = PredictionService()
 
+
+class PredictionHistoryItem(BaseModel):
+    team: str
+    address: str
+    prediction: str
+    id: str
+    timestamp: str
+
+class PredictionHistoryResponse(BaseModel):
+    history: List[PredictionHistoryItem]
 
 class PredictionRequest(BaseModel):
     prediction: str
@@ -221,7 +230,7 @@ async def available_to_predict(
     return await PredictionController.available_to_predict(address)
 
 
-@router.get("/history", response_model=dict[str, str | int])
+@router.get("/history", response_model=PredictionHistoryResponse)
 async def get_address_history(address: str) -> dict[str, list[dict[str, int]]]:
     return await PredictionController.get_address_history(address)
 
